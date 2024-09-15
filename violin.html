@@ -6,35 +6,56 @@
     <title>Virtual Violin</title>
 </head>
 <body>
-    <h1>Virtual Violin</h1>
-    <p>Move your phone up and down to change the pitch. Move it side to side to play sound.</p>
+    <h1>Virtual Violin Debug</h1>
+    <p>Tap the screen to enable sound. Move your phone up and down for pitch, and side to side to play the sound. Check sensor data below to ensure it’s being detected.</p>
+    <h2 id="sensorData">Waiting for sensor data...</h2> <!-- Display sensor data -->
 
     <script>
-        // Function to play a sound based on the phone's pitch
+        let audioContext;
+        let isSoundEnabled = false;
+
+        // Function to play sound with a fixed frequency for debugging
         function playSound(frequency) {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = context.createOscillator();
-            oscillator.type = 'sine'; // Sound wave type
-            oscillator.frequency.setValueAtTime(frequency, context.currentTime); // Set frequency
-            oscillator.connect(context.destination);
+            if (!isSoundEnabled) return; // Do nothing if sound isn't enabled
+
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine'; // Simple sound wave
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime); // Set frequency
+            oscillator.connect(audioContext.destination);
             oscillator.start();
-            oscillator.stop(context.currentTime + 0.5); // Play for 0.5 seconds
+            oscillator.stop(audioContext.currentTime + 0.5); // Play for 0.5 seconds
         }
 
-        // Handle phone orientation and play sound accordingly
-        window.addEventListener('deviceorientation', function(event) {
-            let pitch = event.beta;  // Detect up and down motion (beta)
-            let yaw = event.gamma;   // Detect side to side motion (gamma)
+        // Handle phone orientation and trigger sound
+        function handleOrientation(event) {
+            const pitch = event.beta;  // Up and down motion (beta)
+            const yaw = event.gamma;   // Side to side motion (gamma)
 
-            // Map pitch (beta) to frequency for sound
-            let frequency = 220 + (pitch * 2); // Simple mapping to change pitch
-            if (Math.abs(yaw) > 10) { // Play sound when phone is moved side to side
-                playSound(frequency);
+            // Display sensor data for debugging
+            document.getElementById('sensorData').innerText = 
+                `Pitch (Beta): ${pitch.toFixed(2)}, Yaw (Gamma): ${yaw.toFixed(2)}`;
+
+            // Debug: Constant tone, just to ensure sound plays
+            const frequency = 440; // Middle A note
+
+            if (Math.abs(yaw) > 5 || Math.abs(pitch) > 5) { // Trigger sound for any detectable motion
+                playSound(frequency); // Constant frequency for now to debug motion
             }
+        }
 
-            // Display sensor data (for testing/feedback)
-            document.body.innerHTML = `<h1>Pitch: ${pitch.toFixed(2)}, Yaw: ${yaw.toFixed(2)}</h1>`;
-        });
+        // Enable sound after user interaction
+        function enableSound() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            isSoundEnabled = true; // Enable sound
+            window.addEventListener('deviceorientation', handleOrientation, true); // Listen for motion
+            document.body.innerHTML += "<h2>Sound enabled! Move your phone to play sounds. Check data above.</h2>";
+        }
+
+        // Start sound system after user taps screen
+        document.body.addEventListener('click', enableSound);
+        document.body.addEventListener('touchstart', enableSound); // For mobile
     </script>
 </body>
 </html>
