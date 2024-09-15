@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Violin</title>
+</head>
+<body>
+    <h1>Virtual Violin</h1>
+    <p>Move your phone up and down to change the pitch. Move it side to side to play sound.</p>
+
+    <script>
+        // Function to play a sound based on the phone's pitch
+        function playSound(frequency) {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = context.createOscillator();
+            oscillator.type = 'sine'; // Sound wave type
+            oscillator.frequency.setValueAtTime(frequency, context.currentTime); // Set frequency
+            oscillator.connect(context.destination);
+            oscillator.start();
+            oscillator.stop(context.currentTime + 0.5); // Play for 0.5 seconds
+        }
+
+        // Handle phone orientation and play sound accordingly
+        window.addEventListener('deviceorientation', function(event) {
+            let pitch = event.beta;  // Detect up and down motion (beta)
+            let yaw = event.gamma;   // Detect side to side motion (gamma)
+
+            // Map pitch (beta) to frequency for sound
+            let frequency = 220 + (pitch * 2); // Simple mapping to change pitch
+            if (Math.abs(yaw) > 10) { // Play sound when phone is moved side to side
+                playSound(frequency);
+            }
+
+            // Display sensor data (for testing/feedback)
+            document.body.innerHTML = `<h1>Pitch: ${pitch.toFixed(2)}, Yaw: ${yaw.toFixed(2)}</h1>`;
+        });
+    </script>
+</body>
+</html>
